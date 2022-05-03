@@ -8,7 +8,7 @@ public class Serializer {
 
     public static <T> ByteBuffer serialize(T obj) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate(BufferSize.BUFFER_SIZE);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(BufferSize.BUFFER_SIZE);
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(obj);
         bb.put(byteArrayOutputStream.toByteArray());

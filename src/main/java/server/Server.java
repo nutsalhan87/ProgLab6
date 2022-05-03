@@ -1,6 +1,5 @@
 package server;
 
-import general.Command;
 import general.Port;
 import general.Request;
 import general.route.Route;
@@ -22,13 +21,13 @@ public class Server {
 
         List<Route> data = new LinkedList<>();
         try {
-            if (!(new File("./Data.json").exists())) {
+            if (!(new File("Data.json").exists())) {
                 throw new RuntimeException("Файла данных не существует");
             }
-            if ( !(new File("./Data.json").canWrite() && new File("./Data.json").canRead())) {
+            if ( !(new File("Data.json").canWrite() && new File("Data.json").canRead())) {
                 throw new RuntimeException("Ввод или вывод в данный файл не доступен");
             }
-            ParsedObject parsedObject = new JSONToParsedObject().parseFile("./Data.json");
+            ParsedObject parsedObject = new JSONToParsedObject().parseFile("Data.json");
             data = ParsedObjectToListRoute.convertToListRoute(parsedObject);
         } catch (RuntimeException exc) {
             System.out.println(exc.getMessage());

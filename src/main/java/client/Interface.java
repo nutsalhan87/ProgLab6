@@ -19,7 +19,7 @@ public class Interface {
         ++nestingLevel;
     }
 
-    public void startInterface(Input input) throws IOException {
+    public void startInterface(Input input) {
         if (nestingLevel == 2) {
             System.out.println("Нельзя вызвать один скрипт внутри другого или того же скрипта");
             --nestingLevel;
@@ -44,15 +44,13 @@ public class Interface {
                 System.out.println(GetAnswer.getAnswer(socketChannel));
             } catch (WrongCommandException exc) {
                 System.out.println(exc.getMessage());
-            } catch (NumberFormatException exn) {
-                System.out.println("В качестве id введите целое число");
             } catch (IOException ioexc) {
                 System.out.println("Файл скрипта недоступен.");
             }
         }
     }
 
-    private void execCommand(String command, Input input) throws WrongCommandException, NumberFormatException, IOException {
+    private void execCommand(String command, Input input) throws WrongCommandException, IOException {
         List<String> splittedCommand = new LinkedList<>(Arrays.asList(command.split("\\s+")));
         if (command.equals("") || splittedCommand.size() == 0) {
             throw new WrongCommandException("Введена пустая строка");
@@ -84,7 +82,7 @@ public class Interface {
                     try {
                         Integer.parseUnsignedInt(splittedCommand.get(1));
                         SendRequest.sendRequest(new Request(CommandList.UPDATE,
-                                splittedCommand.subList(1, splittedCommand.size())), socketChannel);
+                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
                         Route route = CreatingNewInstance.createNewRouteInstance(input);
                         socketChannel.write(Serializer.serialize(route));
 
@@ -99,7 +97,7 @@ public class Interface {
                     try {
                         Integer.parseUnsignedInt(splittedCommand.get(1));
                         SendRequest.sendRequest(new Request(CommandList.REMOVE_BY_ID,
-                                splittedCommand.subList(1, splittedCommand.size())), socketChannel);
+                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
                     } catch (NumberFormatException exn) {
                         System.out.println("В качестве id должно быть введено целое положительное число");
                     }
@@ -116,7 +114,6 @@ public class Interface {
                     throw new WrongCommandException();
                 break;
             case EXIT:
-                SendRequest.sendRequest(new Request(CommandList.SAVE, new LinkedList<>()), socketChannel);
                 System.out.println("Осуществлен выход из программы.");
                 System.exit(0);
             case ADD_IF_MAX:
@@ -144,23 +141,29 @@ public class Interface {
                     System.out.println("Программа поддерживает только работу с Route");
                 break;
             case REMOVE_ANY_BY_DISTANCE:
-                if (splittedCommand.size() >= 2)
-                    SendRequest.sendRequest(new Request(CommandList.REMOVE_ANY_BY_DISTANCE,
-                            splittedCommand.subList(1, splittedCommand.size())), socketChannel);
+                if (splittedCommand.size() >= 2) {
+                    try {
+                        Double.parseDouble(splittedCommand.get(1));
+                        SendRequest.sendRequest(new Request(CommandList.REMOVE_ANY_BY_DISTANCE,
+                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
+                    } catch (NumberFormatException exn) {
+                        System.out.println("Введите корректную дистанцию в виде вещественного числа");
+                    }
+                }
                 else
                     throw new WrongCommandException();
                 break;
             case FILTER_CONTAINS_NAME:
                 if (splittedCommand.size() >= 2)
                     SendRequest.sendRequest(new Request(CommandList.HELP,
-                            splittedCommand.subList(1, splittedCommand.size())), socketChannel);
+                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
                 else
                     throw new WrongCommandException();
                 break;
             case FILTER_STARTS_WITH_NAME:
                 if (splittedCommand.size() >= 2)
                     SendRequest.sendRequest(new Request(CommandList.FILTER_STARTS_WITH_NAME,
-                            splittedCommand.subList(1, splittedCommand.size())), socketChannel);
+                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
                 else
                     throw new WrongCommandException();
                 break;

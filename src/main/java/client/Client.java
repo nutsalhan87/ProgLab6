@@ -13,7 +13,6 @@ public class Client {
         SocketChannel socketChannel = SocketChannel.open();
         socketChannel.connect(new InetSocketAddress(InetAddress.getLocalHost(), Port.PORT));
         socketChannel.configureBlocking(false);
-
         new Interface(socketChannel).startInterface(new Scanner(System.in)::nextLine);
     }
 }

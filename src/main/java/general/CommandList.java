@@ -13,7 +13,7 @@ public enum CommandList {
     CLEAR("clear", Commands::clear),
     SAVE("save", Commands::save),
     EXECUTE_SCRIPT("execute_script", Commands::doNothing),
-    EXIT("exit", Commands::doNothing),
+    EXIT("exit", Commands::exit),
     ADD_IF_MAX("add_if_max", Commands::addIfMax),
     REMOVE_GREATER("remove_greater", Commands::removeGreater),
     REMOVE_LOWER("remove_lower", Commands::removeLower),

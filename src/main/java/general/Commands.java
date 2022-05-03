@@ -6,8 +6,9 @@ import general.route.Route;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Commands {
     private Commands() {}
@@ -40,10 +41,7 @@ public class Commands {
     }
 
     public static void show(List<String> arguments, List<Route> data, Socket socket) throws IOException {
-        String answer = "";
-        for (int i = 0; i < data.size(); i++) {
-            answer += data.get(i) + "\n\n";
-        }
+        String answer = data.stream().map(Route::toString).reduce((s1, s2) -> (s1.concat("\n\n").concat(s2))).orElse("");
         SendAnswer.sendAnswer(socket, answer);
     }
 
@@ -53,41 +51,51 @@ public class Commands {
     }
 
     public static void update(List<String> arguments, List<Route> data, Socket socket) throws NumberFormatException, IOException, ClassNotFoundException {
-        for (int i = 0; i < data.size(); i++) {
-            if (data.get(i).getId().equals(Integer.decode(arguments.get(0)))) {
-                data.get(i).updateValues((Route)(new ObjectInputStream(socket.getInputStream()).readObject()));
-                SendAnswer.sendAnswer(socket, "Объект с id " + arguments.get(0) + " успешно изменен");
-                return;
+        Route newRoute = (Route)(new ObjectInputStream(socket.getInputStream()).readObject());
+        List<Route> newData = data.stream().map((r) -> {
+            if (r.getId().equals(Integer.decode(arguments.get(0)))) {
+                return newRoute;
             }
-        }
-        SendAnswer.sendAnswer(socket, "Объекта с таким id нет");
+            else
+                return r;
+        }).collect(Collectors.toList());
+        if(data.equals(newData))
+            SendAnswer.sendAnswer(socket, "Объекта с таким id нет");
+        else
+            SendAnswer.sendAnswer(socket, "Объект с id " + arguments.get(0) + " успешно изменен");
+        data.clear();
+        data.addAll(newData);
     }
 
     public static void removeById(List<String> arguments, List<Route> data, Socket socket) throws NumberFormatException, IOException {
-        for (int i = 0; i < data.size(); i++) {
-            if (data.get(i).getId().equals(Integer.decode(arguments.get(0)))) {
-                data.remove(i);
-                SendAnswer.sendAnswer(socket, "Объект с id " + arguments.get(0) + " успешно удален");
-                return;
-            }
-        }
-        SendAnswer.sendAnswer(socket, "Объекта с таким id нет");
+        List<Route> newData = data.stream().filter((n) -> (!n.getId().equals(Integer.decode(arguments.get(0))))).collect(Collectors.toList());
+        if(data.equals(newData))
+            SendAnswer.sendAnswer(socket, "Объекта с таким id нет");
+        else
+            SendAnswer.sendAnswer(socket, "Объект с id " + arguments.get(0) + " успешно удален");
+        data.clear();
+        data.addAll(newData);
     }
 
     public static void clear(List<String> arguments, List<Route> data, Socket socket) throws IOException {
-        data.clear();
+        data = data.stream().filter(n -> false).collect(Collectors.toList());
         SendAnswer.sendAnswer(socket, "Коллекция успешно очищена");
     }
 
     public static void save(List<String> arguments, List<Route> data, Socket socket) throws IOException {
-        new ListRouteToFileJSON().saveInFile(data, new File("./Data.json"));
+        new ListRouteToFileJSON().saveInFile(data, new File("Data.json"));
         SendAnswer.sendAnswer(socket, "Коллекция сохранена в файл на сервере");
+    }
+
+    public static void exit(List<String> arguments, List<Route> data, Socket socket) throws IOException {
+        save(arguments, data, socket);
+        System.exit(0);
     }
 
     public static void addIfMax(List<String> arguments, List<Route> data, Socket socket) throws IOException, ClassNotFoundException {
         Route toAddIfMax = (Route)(new ObjectInputStream(socket.getInputStream()).readObject());
 
-        if (toAddIfMax.compareTo(Collections.max(data)) > 0) {
+        if (data.stream().max(Route::compareTo).isPresent() && toAddIfMax.compareTo(data.stream().max(Route::compareTo).get()) > 0) {
             data.add(toAddIfMax);
             SendAnswer.sendAnswer(socket,"Новый объект успешно добавлен");
         } else
@@ -96,56 +104,42 @@ public class Commands {
 
     public static void removeGreater(List<String> arguments, List<Route> data, Socket socket) throws IOException, ClassNotFoundException {
         Route forComparison = (Route)(new ObjectInputStream(socket.getInputStream()).readObject());
-
-        for (int i = data.size() - 1; i >= 0; i--) {
-            if (forComparison.compareTo(data.get(i)) < 0)
-                data.remove(i);
-        }
+        data = data.stream().filter((n) -> (forComparison.compareTo(n) <= 0)).collect(Collectors.toList());
 
         SendAnswer.sendAnswer(socket,"Элементы коллекции, превышающие заданный, успешно удалены");
     }
 
     public static void removeLower(List<String> arguments, List<Route> data, Socket socket) throws IOException, ClassNotFoundException {
         Route forComparison = (Route)(new ObjectInputStream(socket.getInputStream()).readObject());
-
-        for (int i = data.size() - 1; i >= 0; i--) {
-            if (forComparison.compareTo(data.get(i)) > 0)
-                data.remove(i);
-        }
+        data = data.stream().filter((n) -> (forComparison.compareTo(n) >= 0)).collect(Collectors.toList());
 
         SendAnswer.sendAnswer(socket,"Элементы коллекции, которые меньше заданного, успешно удалены");
     }
 
     public static void removeAnyByDistance(List<String> arguments, List<Route> data, Socket socket) throws NumberFormatException, IOException {
-        boolean isFound = false;
-        for (int i = 0; i < data.size(); i++) {
-            if (Math.abs(data.get(i).getDistance() - Double.parseDouble(arguments.get(0))) < 0.00000001d) {
-                data.remove(i);
-                isFound = true;
-                break;
-            }
-        }
-        if (isFound)
-            SendAnswer.sendAnswer(socket, "Первый встречный элемент в коллекции, значение distance которого равно заданному, удален");
-        else
-            SendAnswer.sendAnswer(socket,"Элемент, значение distance которого равно заданному, не найден");
+        List<Route> dataWithoutEqualDistances = data.stream()
+                .filter((n) -> (!((Double)n.getDistance()).equals(Double.parseDouble(arguments.get(0))))).collect(Collectors.toList());
+        List<Route> dataWithEqualDistancesButWithoutFirst = data.stream()
+                .filter((n) -> (((Double)n.getDistance()).equals(Double.parseDouble(arguments.get(0))))).skip(1).collect(Collectors.toList());
+        data.clear();
+        data.addAll(dataWithoutEqualDistances);
+        data.addAll(dataWithEqualDistancesButWithoutFirst);
+        data = data.stream().sorted(Comparator.comparingInt(Route::getId)).collect(Collectors.toList());
+        SendAnswer.sendAnswer(socket, "Первый встречный элемент в коллекции, " +
+                "значение distance которого равно заданному, если таковой был найден, удален");
     }
 
     public static void filterContainsName(List<String> arguments, List<Route> data, Socket socket) throws IOException {
-        String answer = "";
-        for (int i = 0; i < data.size(); i++) {
-            if (data.get(i).getName().contains(arguments.get(0)))
-                answer += data.get(i) + "\n\n";
-        }
+        String answer = data.stream().filter((n) -> (n.getName().contains(arguments.get(0)))).map(Route::toString)
+                .reduce((n1, n2) -> (n1 + "\n\n" + n2)).orElse("");
+
         SendAnswer.sendAnswer(socket, answer);
     }
 
     public static void filterStartsWithName(List<String> arguments, List<Route> data, Socket socket) throws IOException {
-        String answer = "";
-        for (int i = 0; i < data.size(); i++) {
-            if (data.get(i).getName().startsWith(arguments.get(0)))
-                answer += data.get(i) + "\n\n";
-        }
+        String answer = data.stream().filter((n) -> (n.getName().startsWith(arguments.get(0)))).map(Route::toString)
+                .reduce((n1, n2) -> (n1 + "\n\n" + n2)).orElse("");
+
         SendAnswer.sendAnswer(socket, answer);
     }
 

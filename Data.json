@@ -1,17 +1,17 @@
 [
   {
     "Route":
-    {
+      {
       "id": 1,
       "name": "WAY1",
-      "coordinates":
+      "coordinates": 
       {
         "x": 4123.0,
         "y": 42341
       },
       "distance": 123.0,
-      "first_location":
-      {
+      "first_location": 
+       {
         "Location":
         {
           "x": 1234.0,
@@ -20,8 +20,8 @@
           "name": "ITMO"
         }
       },
-      "second_location":
-      {
+      "second_location": 
+       {
         "Location":
         {
           "x": 3123,
@@ -33,17 +33,17 @@
   },
   {
     "Route":
-    {
+      {
       "id": 3,
       "name": "AAAA",
-      "coordinates":
+      "coordinates": 
       {
         "x": 11.0,
         "y": 1
       },
       "distance": 123.0,
-      "first_location":
-      {
+      "first_location": 
+       {
         "Location":
         {
           "x": 1.0,
@@ -52,8 +52,8 @@
           "name": "AAAAAAAAAA"
         }
       },
-      "second_location":
-      {
+      "second_location": 
+       {
         "Location":
         {
           "x": 1,
@@ -65,31 +65,31 @@
   },
   {
     "Route":
-    {
+      {
       "id": 4,
-      "name": "fffff",
-      "coordinates":
+      "name": "2",
+      "coordinates": 
       {
-        "x": 1.1E8,
-        "y": 0
+        "x": 2.0,
+        "y": 2
       },
-      "distance": 22.2,
-      "first_location":
-      {
+      "distance": 2.0,
+      "first_location": 
+       {
         "Location":
         {
-          "x": -188888.0,
-          "y": 11,
+          "x": 2.0,
+          "y": 2,
           "z": 2.0,
-          "name": "fff"
+          "name": "2"
         }
       },
-      "second_location":
-      {
+      "second_location": 
+       {
         "Location":
         {
-          "x": 22,
-          "y": 3,
+          "x": 2,
+          "y": 2,
           "z": 2.0
         }
       }
