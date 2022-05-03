@@ -1,6 +1,6 @@
 package server;
 
-import general.Commands;
+
 import general.Port;
 import general.Request;
 import general.route.Route;
@@ -17,6 +17,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Server {
+    private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
+
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         List<Route> data = new LinkedList<>();
         try {
@@ -28,8 +30,11 @@ public class Server {
             }
             ParsedObject parsedObject = new JSONToParsedObject().parseFile("Data.json");
             data = ParsedObjectToListRoute.convertToListRoute(parsedObject);
+            logger.info("Данные коллекции загружены из файла");
         } catch (RuntimeException exc) {
-            System.out.println(exc.getMessage());
+            logger.warn(exc.getMessage());
+        } catch (IOException excio) {
+            logger.warn("Файл данных с коллекией не удалось прочитать");
         }
 
         /*setupSignalHandler(data);
@@ -37,15 +42,19 @@ public class Server {
 
         ServerSocket serverSocket = Connector.connect(Port.PORT);
         Socket socket = serverSocket.accept();
+        logger.info("Клиент подключился к серверу");
         while(true) {
             try {
                 Request request = GetObject.getObject(socket);
+                logger.info("Запрос от клиента получен");
                 SendAnswer.sendAnswer(request.getCommand().getExecutableCommand().execute(request.getArguments(), data), socket);
+                logger.info("Отправлен ответ клиенту");
             } catch (SocketException exs) {
-                System.out.println("Соединение с клиентом потеряно");
+                logger.warn("Соединение с клиентом потеряно");
                 serverSocket.close();
                 serverSocket = Connector.connect(Port.PORT);
                 socket = serverSocket.accept();
+                logger.info("Клиент подключился к серверу");
             }
         }
     }
@@ -55,13 +64,14 @@ public class Server {
             try {
                 Commands.save(new LinkedList<>(), data);
             } catch (IOException excio) {
-                System.out.println("Сохранение недоступно. Проблемы с доступом к файлу");
+                logger.warn("Сохранение недоступно. Проблемы с доступом к файлу");
             }
         });
     }
 
     private void setupShutDownWork(List<Route> data) { //CTRL + C
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Произошел выход из программы");
             System.exit(0);
         }));
     }*/
