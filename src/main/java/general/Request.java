@@ -5,9 +5,9 @@ import java.util.List;
 
 public class Request implements Serializable {
     private final CommandList command;
-    private final List<String> arguments;
+    private final List<Object> arguments;
 
-    public Request (CommandList cmd, List<String> args) {
+    public Request (CommandList cmd, List<Object> args) {
         command = cmd;
         arguments = args;
     }
@@ -16,7 +16,7 @@ public class Request implements Serializable {
         return command;
     }
 
-    public List<String> getArguments() {
+    public List<Object> getArguments() {
         return arguments;
     }
 }

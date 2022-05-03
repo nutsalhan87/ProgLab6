@@ -3,20 +3,18 @@ package client;
 import client.workwithroute.CreatingNewInstance;
 import general.CommandList;
 import general.Request;
-import general.Serializer;
 import general.route.Route;
 
 import java.io.*;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 
-public class Interface {
-    SocketChannel socketChannel;
+public class ConsoleInterface {
     private static int nestingLevel = 0;
-
-    public Interface(SocketChannel sc) {
-        socketChannel = sc;
+    SocketChannel socketChannel;
+    public ConsoleInterface(SocketChannel sc) {
         ++nestingLevel;
+        socketChannel = sc;
     }
 
     public void startInterface(Input input) {
@@ -40,8 +38,18 @@ public class Interface {
             }
 
             try {
-                execCommand(inputLine, input);
-                System.out.println(GetAnswer.getAnswer(socketChannel));
+                Request request = execCommand(inputLine, input);
+                if (request.getCommand() == CommandList.NO_COMMAND)
+                    continue;
+                try {
+                    SendObject.sendObject(request, socketChannel);
+                    System.out.println(GetAnswer.getAnswer(socketChannel));
+                } catch (IOException ioexc) {
+                    System.out.println(ioexc.getMessage());
+                    socketChannel.close();
+                    --nestingLevel;
+                    return;
+                }
             } catch (WrongCommandException exc) {
                 System.out.println(exc.getMessage());
             } catch (IOException ioexc) {
@@ -50,7 +58,7 @@ public class Interface {
         }
     }
 
-    private void execCommand(String command, Input input) throws WrongCommandException, IOException {
+    private Request execCommand(String command, Input input) throws WrongCommandException, IOException {
         List<String> splittedCommand = new LinkedList<>(Arrays.asList(command.split("\\s+")));
         if (command.equals("") || splittedCommand.size() == 0) {
             throw new WrongCommandException("Введена пустая строка");
@@ -61,112 +69,94 @@ public class Interface {
 
         switch (CommandList.getCommandList(splittedCommand.get(0))) {
             case HELP:
-                SendRequest.sendRequest(new Request(CommandList.HELP, new LinkedList<>()), socketChannel);
-                break;
+                return new Request(CommandList.HELP, new LinkedList<>());
             case INFO:
-                SendRequest.sendRequest(new Request(CommandList.INFO, new LinkedList<>()), socketChannel);
-                break;
+                return new Request(CommandList.INFO, new LinkedList<>());
             case SHOW:
-                SendRequest.sendRequest(new Request(CommandList.SHOW, new LinkedList<>()), socketChannel);
-                break;
+                return new Request(CommandList.SHOW, new LinkedList<>());
             case ADD:
                 if (splittedCommand.size() >= 2 && splittedCommand.get(1).equals("Route")) {
-                    SendRequest.sendRequest(new Request(CommandList.ADD, new LinkedList<>()), socketChannel);
                     Route route = CreatingNewInstance.createNewRouteInstance(input);
-                    socketChannel.write(Serializer.serialize(route));
+                    return new Request(CommandList.ADD, Arrays.asList(route));
                 } else
                     throw new WrongCommandException("В коллекцию можно добавить только объект класса Route");
-                break;
             case UPDATE:
                 if (splittedCommand.size() >= 2) {
                     try {
                         Integer.parseUnsignedInt(splittedCommand.get(1));
-                        SendRequest.sendRequest(new Request(CommandList.UPDATE,
-                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
-                        Route route = CreatingNewInstance.createNewRouteInstance(input);
-                        socketChannel.write(Serializer.serialize(route));
-
+                        List<Object> objList = new LinkedList<>();
+                        objList.add(CreatingNewInstance.createNewRouteInstance(input));
+                        objList.addAll(splittedCommand.subList(1, splittedCommand.size()));
+                        return new Request(CommandList.UPDATE, objList);
                     } catch (NumberFormatException exn) {
-                        System.out.println("В качестве id должно быть введено целое положительное число");
+                        throw new WrongCommandException("В качестве id должно быть введено целое положительное число");
                     }
                 } else
                     throw new WrongCommandException();
-                break;
             case REMOVE_BY_ID:
                 if (splittedCommand.size() >= 2) {
                     try {
                         Integer.parseUnsignedInt(splittedCommand.get(1));
-                        SendRequest.sendRequest(new Request(CommandList.REMOVE_BY_ID,
-                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
+                        return new Request(CommandList.REMOVE_BY_ID,
+                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size())));
                     } catch (NumberFormatException exn) {
-                        System.out.println("В качестве id должно быть введено целое положительное число");
+                        throw new WrongCommandException("В качестве id должно быть введено целое положительное число");
                     }
                 } else
                     throw new WrongCommandException();
-                break;
             case CLEAR:
-                SendRequest.sendRequest(new Request(CommandList.CLEAR, new LinkedList<>()), socketChannel);
-                break;
+                return new Request(CommandList.CLEAR, new LinkedList<>());
             case EXECUTE_SCRIPT:
                 if (splittedCommand.size() >= 2 && new File(splittedCommand.get(1)).exists() && new File(splittedCommand.get(1)).canRead()) {
-                    new Interface(socketChannel).startInterface(new BufferedReader(new FileReader(splittedCommand.get(1)))::readLine);
+                    new ConsoleInterface(socketChannel).startInterface(new BufferedReader(new FileReader(splittedCommand.get(1)))::readLine);
+                    return new Request(CommandList.NO_COMMAND, new LinkedList<>());
                 } else
                     throw new WrongCommandException();
-                break;
             case EXIT:
                 System.out.println("Осуществлен выход из программы.");
                 System.exit(0);
             case ADD_IF_MAX:
                 if (splittedCommand.size() >= 2 && splittedCommand.get(1).equals("Route")) {
-                    SendRequest.sendRequest(new Request(CommandList.ADD_IF_MAX, new LinkedList<>()), socketChannel);
                     Route route = CreatingNewInstance.createNewRouteInstance(input);
-                    socketChannel.write(Serializer.serialize(route));
+                    return new Request(CommandList.ADD_IF_MAX, Arrays.asList(route));
                 } else
-                    System.out.println("Программа поддерживает только работу с Route");
-                break;
+                    throw new WrongCommandException("Программа поддерживает только работу с Route");
             case REMOVE_GREATER:
                 if (splittedCommand.size() >= 2 && splittedCommand.get(1).equals("Route")) {
-                    SendRequest.sendRequest(new Request(CommandList.REMOVE_GREATER, new LinkedList<>()), socketChannel);
                     Route route = CreatingNewInstance.createNewRouteInstance(input);
-                    socketChannel.write(Serializer.serialize(route));
+                    return new Request(CommandList.REMOVE_GREATER, Arrays.asList(route));
                 } else
-                    System.out.println("Программа поддерживает только работу с Route");
-                break;
+                    throw new WrongCommandException("Программа поддерживает только работу с Route");
             case REMOVE_LOWER:
                 if (splittedCommand.size() >= 2 && splittedCommand.get(1).equals("Route")) {
-                    SendRequest.sendRequest(new Request(CommandList.REMOVE_LOWER, new LinkedList<>()), socketChannel);
                     Route route = CreatingNewInstance.createNewRouteInstance(input);
-                    socketChannel.write(Serializer.serialize(route));
+                    return new Request(CommandList.REMOVE_LOWER, Arrays.asList(route));
                 } else
-                    System.out.println("Программа поддерживает только работу с Route");
-                break;
+                    throw new WrongCommandException("Программа поддерживает только работу с Route");
             case REMOVE_ANY_BY_DISTANCE:
                 if (splittedCommand.size() >= 2) {
                     try {
                         Double.parseDouble(splittedCommand.get(1));
-                        SendRequest.sendRequest(new Request(CommandList.REMOVE_ANY_BY_DISTANCE,
-                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
+                        return new Request(CommandList.REMOVE_ANY_BY_DISTANCE,
+                                new LinkedList<>(splittedCommand.subList(1, splittedCommand.size())));
                     } catch (NumberFormatException exn) {
-                        System.out.println("Введите корректную дистанцию в виде вещественного числа");
+                        throw new WrongCommandException("Введите корректную дистанцию в виде вещественного числа");
                     }
                 }
                 else
                     throw new WrongCommandException();
-                break;
             case FILTER_CONTAINS_NAME:
                 if (splittedCommand.size() >= 2)
-                    SendRequest.sendRequest(new Request(CommandList.HELP,
-                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
+                    return new Request(CommandList.HELP,
+                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size())));
                 else
                     throw new WrongCommandException();
-                break;
             case FILTER_STARTS_WITH_NAME:
                 if (splittedCommand.size() >= 2)
-                    SendRequest.sendRequest(new Request(CommandList.FILTER_STARTS_WITH_NAME,
-                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size()))), socketChannel);
+                    return new Request(CommandList.FILTER_STARTS_WITH_NAME,
+                            new LinkedList<>(splittedCommand.subList(1, splittedCommand.size())));
                 else
                     throw new WrongCommandException();
-                break;
             default:
                 throw new WrongCommandException();
         }
