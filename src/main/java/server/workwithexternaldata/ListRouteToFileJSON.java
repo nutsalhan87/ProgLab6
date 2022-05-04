@@ -13,7 +13,8 @@ import java.util.List;
  */
 
 public class ListRouteToFileJSON implements SaveData<Route> {
-    public ListRouteToFileJSON() {}
+    public ListRouteToFileJSON() {
+    }
 
     @Override
     public void saveInFile(List<Route> data, File file) throws IOException {
@@ -21,11 +22,9 @@ public class ListRouteToFileJSON implements SaveData<Route> {
 
         writer.write("[\n");
         String json;
-        for(int i = 0; i < data.size(); ++i) {
-            if(i != data.size() - 1)
-                json = "  {\n" + data.get(i).toJSON(4) + "\n  },\n";
-            else
-                json = "  {\n" + data.get(i).toJSON(4) + "\n  }\n";
+        for (int i = 0; i < data.size(); ++i) {
+            if (i != data.size() - 1) json = "  {\n" + data.get(i).toJSON(4) + "\n  },\n";
+            else json = "  {\n" + data.get(i).toJSON(4) + "\n  }\n";
             writer.write(json);
         }
         writer.write("]");

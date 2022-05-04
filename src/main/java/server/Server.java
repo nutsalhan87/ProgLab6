@@ -1,12 +1,14 @@
 package server;
 
 
+import general.Commands;
 import general.Port;
 import general.Request;
 import general.route.Route;
 import server.workwithexternaldata.JSONToParsedObject;
 import server.workwithexternaldata.ParsedObjectToListRoute;
 import server.workwithexternaldata.parsedobjects.ParsedObject;
+import sun.misc.Signal;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Server {
     private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger();
@@ -25,7 +28,7 @@ public class Server {
             if (!(new File("Data.json").exists())) {
                 throw new RuntimeException("Файла данных не существует");
             }
-            if ( !(new File("Data.json").canWrite() && new File("Data.json").canRead())) {
+            if (!(new File("Data.json").canWrite() && new File("Data.json").canRead())) {
                 throw new RuntimeException("Ввод или вывод в данный файл не доступен");
             }
             ParsedObject parsedObject = new JSONToParsedObject().parseFile("Data.json");
@@ -40,10 +43,13 @@ public class Server {
         /*setupSignalHandler(data);
         setupShutDownWork(data);*/
 
-        ServerSocket serverSocket = Connector.connect(Port.PORT);
+        logger.info("Введите порт");
+        int port = new Scanner(System.in).nextInt();
+
+        ServerSocket serverSocket = Connector.connect(port);
         Socket socket = serverSocket.accept();
         logger.info("Клиент подключился к серверу");
-        while(true) {
+        while (true) {
             try {
                 Request request = GetObject.getObject(socket);
                 logger.info("Запрос от клиента получен");
@@ -52,14 +58,14 @@ public class Server {
             } catch (SocketException exs) {
                 logger.warn("Соединение с клиентом потеряно");
                 serverSocket.close();
-                serverSocket = Connector.connect(Port.PORT);
+                serverSocket = Connector.connect(port);
                 socket = serverSocket.accept();
                 logger.info("Клиент подключился к серверу");
             }
         }
     }
 
-    /*private void setupSignalHandler(List<Route> data) { //CTRL + Z
+    /*private static void setupSignalHandler(List<Route> data) { //CTRL + Z
         Signal.handle(new Signal("TSTP"), signal -> {
             try {
                 Commands.save(new LinkedList<>(), data);
@@ -69,7 +75,7 @@ public class Server {
         });
     }
 
-    private void setupShutDownWork(List<Route> data) { //CTRL + C
+    private static void setupShutDownWork(List<Route> data) { //CTRL + C
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Произошел выход из программы");
             System.exit(0);

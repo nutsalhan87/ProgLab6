@@ -6,10 +6,12 @@ import general.route.Route;
 import java.io.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Commands {
-    private Commands() {}
+    private Commands() {
+    }
 
     public static String help(List<Object> arguments, List<Route> data) {
         return "help: вывести справку по доступным командам\n" +
@@ -39,28 +41,29 @@ public class Commands {
     }
 
     public static String add(List<Object> arguments, List<Route> data) {
-        data.add((Route)arguments.get(0));
+        Route newRoute = (Route)arguments.get(0);
+        data.add(new Route(newRoute.getName(), newRoute.getCoordinates(), newRoute.getFrom(), newRoute.getTo(), newRoute.getDistance()));
         return "Новый экземпляр класса успешно добавлен в коллекцию";
     }
 
     public static String update(List<Object> arguments, List<Route> data) throws NumberFormatException {
-        Route newRoute = (Route)arguments.get(0);
+        Route newRoute = (Route) arguments.get(0);
         List<Route> newData = data.stream().map((r) -> {
-            if (r.getId().equals(Integer.decode((String)arguments.get(1)))) {
+            if (r.getId().equals(Integer.decode((String) arguments.get(1)))) {
                 return newRoute;
-            }
-            else
+            } else
                 return r;
         }).collect(Collectors.toList());
-        String answer = data.equals(newData) ? "Объекта с таким id нет" : "Объект с id " + (String)arguments.get(1) + " успешно изменен";
+        String answer = data.equals(newData) ? "Объекта с таким id нет" : "Объект с id " + (String) arguments.get(1) + " успешно изменен";
         data.clear();
         data.addAll(newData);
         return answer;
     }
 
     public static String removeById(List<Object> arguments, List<Route> data) throws NumberFormatException {
-        List<Route> newData = data.stream().filter((n) -> (!n.getId().equals(Integer.decode((String)arguments.get(0))))).collect(Collectors.toList());
-        String answer = data.equals(newData) ? "Объекта с таким id нет" : "Объект с id " + (String)arguments.get(0) + " успешно удален";
+        List<Route> newData = data.stream().filter((n) -> (!n.getId().equals(Integer.decode((String) arguments.get(0)))))
+                .collect(Collectors.toList());
+        String answer = data.equals(newData) ? "Объекта с таким id нет" : "Объект с id " + (String) arguments.get(0) + " успешно удален";
         data.clear();
         data.addAll(newData);
         return answer;
@@ -83,34 +86,36 @@ public class Commands {
     }
 
     public static String addIfMax(List<Object> arguments, List<Route> data) {
-        Route toAddIfMax = (Route)arguments.get(0);
+        Route toAddIfMax = (Route) arguments.get(0);
 
-        if (data.stream().max(Route::compareTo).isPresent() && toAddIfMax.compareTo(data.stream().max(Route::compareTo).get()) > 0) {
+        if (data.stream().max(Route::compareTo).isPresent() &&
+                toAddIfMax.compareTo(data.stream().max(Route::compareTo).get()) > 0) {
             data.add(toAddIfMax);
-           return "Новый объект успешно добавлен";
+            return "Новый объект успешно добавлен";
         } else
             return "Новый объект не больше максимального элемента коллекции, потому не был добавлен";
     }
 
     public static String removeGreater(List<Object> arguments, List<Route> data) {
-        Route forComparison = (Route)arguments.get(0);
+        Route forComparison = (Route) arguments.get(0);
         data = data.stream().filter((n) -> (forComparison.compareTo(n) <= 0)).collect(Collectors.toList());
 
         return "Элементы коллекции, превышающие заданный, успешно удалены";
     }
 
     public static String removeLower(List<Object> arguments, List<Route> data) {
-        Route forComparison = (Route)arguments.get(0);
+        Route forComparison = (Route) arguments.get(0);
         data = data.stream().filter((n) -> (forComparison.compareTo(n) >= 0)).collect(Collectors.toList());
 
         return "Элементы коллекции, которые меньше заданного, успешно удалены";
     }
 
     public static String removeAnyByDistance(List<Object> arguments, List<Route> data) throws NumberFormatException {
+        Predicate<Route> predicate = (n) -> (((Double) n.getDistance()).equals(Double.parseDouble((String) arguments.get(0))));
         List<Route> dataWithoutEqualDistances = data.stream()
-                .filter((n) -> (!((Double)n.getDistance()).equals(Double.parseDouble((String)arguments.get(0))))).collect(Collectors.toList());
+                .filter((n) -> (!predicate.test(n))).collect(Collectors.toList());
         List<Route> dataWithEqualDistancesButWithoutFirst = data.stream()
-                .filter((n) -> (((Double)n.getDistance()).equals(Double.parseDouble((String)arguments.get(0))))).skip(1).collect(Collectors.toList());
+                .filter(predicate).skip(1).collect(Collectors.toList());
         data.clear();
         data.addAll(dataWithoutEqualDistances);
         data.addAll(dataWithEqualDistancesButWithoutFirst);
@@ -120,14 +125,16 @@ public class Commands {
     }
 
     public static String filterContainsName(List<Object> arguments, List<Route> data) {
-        return data.stream().filter((n) -> (n.getName().contains((String)arguments.get(0)))).map(Route::toString)
+        return data.stream().filter((n) -> (n.getName().contains((String) arguments.get(0)))).map(Route::toString)
                 .reduce((n1, n2) -> (n1 + "\n\n" + n2)).orElse("");
     }
 
     public static String filterStartsWithName(List<Object> arguments, List<Route> data) {
-        return data.stream().filter((n) -> (n.getName().startsWith((String)arguments.get(0)))).map(Route::toString)
+        return data.stream().filter((n) -> (n.getName().startsWith((String) arguments.get(0)))).map(Route::toString)
                 .reduce((n1, n2) -> (n1 + "\n\n" + n2)).orElse("");
     }
 
-    public static String doNothing(List<Object> arguments, List<Route> data) { return ""; }
+    public static String doNothing(List<Object> arguments, List<Route> data) {
+        return "";
+    }
 }

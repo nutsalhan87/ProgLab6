@@ -11,7 +11,7 @@ import java.util.*;
 
 public class ConsoleInterface {
     private static int nestingLevel = 0;
-    SocketChannel socketChannel;
+    private SocketChannel socketChannel;
     public ConsoleInterface(SocketChannel sc) {
         ++nestingLevel;
         socketChannel = sc;
@@ -39,7 +39,7 @@ public class ConsoleInterface {
 
             try {
                 Request request = execCommand(inputLine, input);
-                if (request.getCommand() == CommandList.NO_COMMAND)
+                if (CommandList.NO_COMMAND.equals(request.getCommand()))
                     continue;
                 try {
                     SendObject.sendObject(request, socketChannel);

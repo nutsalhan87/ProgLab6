@@ -1,6 +1,9 @@
 package general;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Request implements Serializable {
@@ -9,7 +12,7 @@ public class Request implements Serializable {
 
     public Request (CommandList cmd, List<Object> args) {
         command = cmd;
-        arguments = args;
+        arguments = new LinkedList<>(args);
     }
 
     public CommandList getCommand() {

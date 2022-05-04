@@ -4,6 +4,7 @@ import general.route.Coordinates;
 import general.route.Route;
 import server.workwithexternaldata.parsedobjects.ParsedObject;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,13 +25,13 @@ public class ParsedObjectToListRoute {
                 data.add(extractRouteObject(parsedObject, i));
             }
             catch (NullPointerException exc) {
-                System.out.println("Объект под номером " + (i + 1) + " не может быть добавлен вследствие некорреткных данных.");
+                System.out.println("Объект под номером " + (i + 1) + " не может быть добавлен вследствие некорректных данных.");
             }
             catch (IllegalArgumentException exci) {
                 System.out.println(exci.getMessage());
             }
         }
-
+        data.sort(Comparator.comparing(Route::getId));
         return data;
     }
 
