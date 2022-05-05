@@ -1,14 +1,11 @@
 package server;
 
 
-import general.Commands;
-import general.Port;
 import general.Request;
 import general.route.Route;
 import server.workwithexternaldata.JSONToParsedObject;
 import server.workwithexternaldata.ParsedObjectToListRoute;
 import server.workwithexternaldata.parsedobjects.ParsedObject;
-import sun.misc.Signal;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +48,7 @@ public class Server {
         logger.info("Клиент подключился к серверу");
         while (true) {
             try {
-                Request request = GetObject.getObject(socket);
+                Request request = GetRequest.getRequest(socket);
                 logger.info("Запрос от клиента получен");
                 SendAnswer.sendAnswer(request.getCommand().getExecutableCommand().execute(request.getArguments(), data), socket);
                 logger.info("Отправлен ответ клиенту");

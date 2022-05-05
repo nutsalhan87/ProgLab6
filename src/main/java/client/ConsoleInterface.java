@@ -12,13 +12,14 @@ import java.util.*;
 public class ConsoleInterface {
     private static int nestingLevel = 0;
     private SocketChannel socketChannel;
+
     public ConsoleInterface(SocketChannel sc) {
         ++nestingLevel;
         socketChannel = sc;
     }
 
     public void startInterface(Input input) {
-        if (nestingLevel == 2) {
+        if (nestingLevel > 2) {
             System.out.println("Нельзя вызвать один скрипт внутри другого или того же скрипта");
             --nestingLevel;
             return;
@@ -39,10 +40,11 @@ public class ConsoleInterface {
 
             try {
                 Request request = execCommand(inputLine, input);
-                if (CommandList.NO_COMMAND.equals(request.getCommand()))
+                if (CommandList.NO_COMMAND.equals(request.getCommand())) {
                     continue;
+                }
                 try {
-                    SendObject.sendObject(request, socketChannel);
+                    SendRequest.sendRequest(request, socketChannel);
                     System.out.println(GetAnswer.getAnswer(socketChannel));
                 } catch (IOException ioexc) {
                     System.out.println(ioexc.getMessage());
@@ -142,8 +144,7 @@ public class ConsoleInterface {
                     } catch (NumberFormatException exn) {
                         throw new WrongCommandException("Введите корректную дистанцию в виде вещественного числа");
                     }
-                }
-                else
+                } else
                     throw new WrongCommandException();
             case FILTER_CONTAINS_NAME:
                 if (splittedCommand.size() >= 2)
