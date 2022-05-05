@@ -45,19 +45,22 @@ public class Server {
 
         ServerSocket serverSocket = Connector.connect(port);
         Socket socket = serverSocket.accept();
-        logger.info("Клиент подключился к серверу");
         while (true) {
             try {
+                if(serverSocket.isClosed()) {
+                    serverSocket = Connector.connect(port);
+                    socket = serverSocket.accept();
+                }
+                logger.info("Клиент подключился к серверу");
                 Request request = GetRequest.getRequest(socket);
                 logger.info("Запрос от клиента получен");
                 SendAnswer.sendAnswer(request.getCommand().getExecutableCommand().execute(request.getArguments(), data), socket);
                 logger.info("Отправлен ответ клиенту");
+                serverSocket.close();
+                logger.info("Клиент отключился от сервера");
             } catch (SocketException exs) {
                 logger.warn("Соединение с клиентом потеряно");
                 serverSocket.close();
-                serverSocket = Connector.connect(port);
-                socket = serverSocket.accept();
-                logger.info("Клиент подключился к серверу");
             }
         }
     }

@@ -24,4 +24,10 @@ public class Connector {
         }
         throw new ConnectException("Подключиться к серверу не вышло");
     }
+
+    public static void closeConnection(SocketChannel socketChannel) {
+        try {
+            socketChannel.close();
+        } catch (IOException exio) {}
+    }
 }

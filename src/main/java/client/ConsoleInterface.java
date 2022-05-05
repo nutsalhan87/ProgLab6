@@ -10,46 +10,40 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 
 public class ConsoleInterface {
-    private static int nestingLevel = 0;
+    private static int nestingLevel = 1;
     private SocketChannel socketChannel;
+    private int port;
 
-    public ConsoleInterface(SocketChannel sc) {
-        ++nestingLevel;
+    public ConsoleInterface(SocketChannel sc, int port) {
         socketChannel = sc;
+        this.port = port;
     }
 
     public void startInterface(Input input) {
-        if (nestingLevel > 2) {
-            System.out.println("Нельзя вызвать один скрипт внутри другого или того же скрипта");
-            --nestingLevel;
-            return;
-        }
         String inputLine;
         while (true) {
             try {
                 inputLine = input.readLine();
                 if (inputLine == null) {
-                    --nestingLevel;
                     return;
                 }
             } catch (IOException exio) {
                 System.out.println("Такого файла нет");
-                --nestingLevel;
                 return;
             }
 
             try {
-                Request request = execCommand(inputLine, input);
+                Request request = createRequest(inputLine, input);
                 if (CommandList.NO_COMMAND.equals(request.getCommand())) {
                     continue;
                 }
                 try {
+                    socketChannel = Connector.connectedSocket(port);
                     SendRequest.sendRequest(request, socketChannel);
                     System.out.println(GetAnswer.getAnswer(socketChannel));
+                    Connector.closeConnection(socketChannel);
                 } catch (IOException ioexc) {
                     System.out.println(ioexc.getMessage());
-                    socketChannel.close();
-                    --nestingLevel;
                     return;
                 }
             } catch (WrongCommandException exc) {
@@ -60,7 +54,7 @@ public class ConsoleInterface {
         }
     }
 
-    private Request execCommand(String command, Input input) throws WrongCommandException, IOException {
+    private Request createRequest(String command, Input input) throws WrongCommandException, IOException {
         List<String> splittedCommand = new LinkedList<>(Arrays.asList(command.split("\\s+")));
         if (command.equals("") || splittedCommand.size() == 0) {
             throw new WrongCommandException("Введена пустая строка");
@@ -109,8 +103,14 @@ public class ConsoleInterface {
             case CLEAR:
                 return new Request(CommandList.CLEAR, new LinkedList<>());
             case EXECUTE_SCRIPT:
+                if (nestingLevel == 2) {
+                    System.out.println("Нельзя вызвать один скрипт внутри другого или того же скрипта");
+                    return new Request(CommandList.NO_COMMAND, new LinkedList<>());
+                }
                 if (splittedCommand.size() >= 2 && new File(splittedCommand.get(1)).exists() && new File(splittedCommand.get(1)).canRead()) {
-                    new ConsoleInterface(socketChannel).startInterface(new BufferedReader(new FileReader(splittedCommand.get(1)))::readLine);
+                    ++nestingLevel;
+                    new ConsoleInterface(socketChannel, port).startInterface(new BufferedReader(new FileReader(splittedCommand.get(1)))::readLine);
+                    --nestingLevel;
                     return new Request(CommandList.NO_COMMAND, new LinkedList<>());
                 } else
                     throw new WrongCommandException();
