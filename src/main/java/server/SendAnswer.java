@@ -11,5 +11,6 @@ public class SendAnswer {
         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
         outputStreamWriter.write(answer.toCharArray());
         outputStreamWriter.flush();
+        socket.close();
     }
 }

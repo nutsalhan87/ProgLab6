@@ -148,7 +148,7 @@ public class ConsoleInterface {
                     throw new WrongCommandException();
             case FILTER_CONTAINS_NAME:
                 if (splittedCommand.size() >= 2)
-                    return new Request(CommandList.HELP,
+                    return new Request(CommandList.FILTER_CONTAINS_NAME,
                             new LinkedList<>(splittedCommand.subList(1, splittedCommand.size())));
                 else
                     throw new WrongCommandException();

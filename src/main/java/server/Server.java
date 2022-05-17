@@ -56,7 +56,6 @@ public class Server {
                 logger.info("Запрос от клиента получен");
                 SendAnswer.sendAnswer(request.getCommand().getExecutableCommand().execute(request.getArguments(), data), socket);
                 logger.info("Отправлен ответ клиенту");
-                serverSocket.close();
                 logger.info("Клиент отключился от сервера");
             } catch (SocketException exs) {
                 logger.warn("Соединение с клиентом потеряно");

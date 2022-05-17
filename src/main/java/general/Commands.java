@@ -70,7 +70,7 @@ public class Commands {
     }
 
     public static String clear(List<Object> arguments, List<Route> data) {
-        data = data.stream().filter(n -> false).collect(Collectors.toList());
+        data.clear();
         return "Коллекция успешно очищена";
     }
 
@@ -98,15 +98,17 @@ public class Commands {
 
     public static String removeGreater(List<Object> arguments, List<Route> data) {
         Route forComparison = (Route) arguments.get(0);
-        data = data.stream().filter((n) -> (forComparison.compareTo(n) <= 0)).collect(Collectors.toList());
-
+        List<Route> newData = data.stream().filter((n) -> (forComparison.compareTo(n) > 0)).collect(Collectors.toList());
+        data.clear();
+        data.addAll(newData);
         return "Элементы коллекции, превышающие заданный, успешно удалены";
     }
 
     public static String removeLower(List<Object> arguments, List<Route> data) {
         Route forComparison = (Route) arguments.get(0);
-        data = data.stream().filter((n) -> (forComparison.compareTo(n) >= 0)).collect(Collectors.toList());
-
+        List<Route> newData = data.stream().filter((n) -> (forComparison.compareTo(n) < 0)).collect(Collectors.toList());
+        data.clear();
+        data.addAll(newData);
         return "Элементы коллекции, которые меньше заданного, успешно удалены";
     }
 
@@ -119,7 +121,9 @@ public class Commands {
         data.clear();
         data.addAll(dataWithoutEqualDistances);
         data.addAll(dataWithEqualDistancesButWithoutFirst);
-        data = data.stream().sorted(Comparator.comparingInt(Route::getId)).collect(Collectors.toList());
+        List<Route> newData = data.stream().sorted(Comparator.comparingInt(Route::getId)).collect(Collectors.toList());
+        data.clear();
+        data.addAll(newData);
         return "Первый встречный элемент в коллекции, " +
                 "значение distance которого равно заданному, если таковой был найден, удален";
     }
